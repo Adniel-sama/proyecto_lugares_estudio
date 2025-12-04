@@ -16,6 +16,8 @@ class LugarForm(forms.ModelForm):
             "tipo",
             "direccion",
             "comuna",
+            "descripcion",   # <--- nueva
+            "imagen_url",    # <--- nueva
             "horario_apertura",
             "horario_cierre",
             "wifi",
@@ -26,6 +28,8 @@ class LugarForm(forms.ModelForm):
             "tipo": forms.Select(attrs={"class": "form-select"}),
             "direccion": forms.TextInput(attrs={"class": "form-control"}),
             "comuna": forms.TextInput(attrs={"class": "form-control"}),
+            "descripcion": forms.Textarea(attrs={"class": "form-control", "rows":3}),  # <--- nueva
+            "imagen_url": forms.URLInput(attrs={"class": "form-control", "placeholder":"https://..."}),  # <--- nueva
             "horario_apertura": TimeInput(attrs={"class": "form-control"}),
             "horario_cierre": TimeInput(attrs={"class": "form-control"}),
             "wifi": forms.CheckboxInput(attrs={"class": "form-check-input"}),

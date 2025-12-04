@@ -30,6 +30,8 @@ class Lugar(models.Model):
     tipo = models.CharField(max_length=32, choices=TIPO_LUGAR_CHOICES, db_index=True)
     direccion = models.CharField(max_length=255, blank=True)
     comuna = models.CharField(max_length=120, db_index=True)
+    descripcion = models.TextField(blank=True)  # <--- nueva
+    imagen_url = models.URLField(blank=True, null=True)  # <--- nueva
     horario_apertura = models.TimeField(null=True, blank=True)
     horario_cierre = models.TimeField(null=True, blank=True)
     wifi = models.BooleanField(default=False)
@@ -96,17 +98,13 @@ class Resena(models.Model):
             models.Index(fields=["usuario"]),
             models.Index(fields=["creado_en"]),
         ]
-        # Opcional: evitar reseñas idénticas por usuario/lugar en un corto periodo
-        # constraints = [
-        #     models.UniqueConstraint(fields=['usuario', 'lugar', 'creado_en'], name='unique_user_lugar_fecha')
-        # ]
+
 
     def __str__(self):
         texto = f"Reseña de {self.usuario} sobre {self.lugar}"
         return texto
 
     def clean(self):
-        # Si marca no aplica, asegúrate catalogo sea None.
         if self.catalogo_no_aplica and self.catalogo is not None:
             raise ValidationError("Si 'catalogo_no_aplica' es True, 'catalogo' debe ser vacío (NULL).")
         # Si catalogo tiene valor y está fuera de rango, los validators ya lanzarán.

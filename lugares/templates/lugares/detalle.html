@@ -11,6 +11,15 @@
       Horario: {{ lugar.horario_apertura }} — {{ lugar.horario_cierre }}
     {% endif %}
     {% if lugar.wifi %} • Wi-Fi disponible{% endif %}
+{% if lugar.imagen_url %}
+    <div class="text-center mb-3">
+        <img src="{{ lugar.imagen_url }}" alt="{{ lugar.nombre }}" class="img-thumbnail d-block" style="max-width: 300px; height: auto;">
+    </div>
+{% endif %}
+
+    {% if lugar.descripcion %}
+        <p>{{ lugar.descripcion }}</p>
+    {% endif %}
   </p>
 
   <div class="mt-3 d-flex gap-2">
@@ -21,7 +30,7 @@
     {% endif %}
   </div>
 </div>
-a
+
 <hr>
 
 <h5>Etiquetas</h5>

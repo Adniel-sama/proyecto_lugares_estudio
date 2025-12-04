@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, DetailView
 )
@@ -9,6 +9,8 @@ from .models import Lugar, Resena, Lista, Etiqueta
 from .forms import LugarForm, ResenaForm, ListaForm, EtiquetaForm
 
 from django.contrib import messages
+
+from django.http import HttpResponseForbidden
 
 
 
@@ -154,8 +156,7 @@ class ResenaDetailView(DetailView):
     context_object_name = "resena"
 
 
-from django.contrib.auth.mixins import UserPassesTestMixin
-from django.http import HttpResponseForbidden
+
 
 class ResenaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Resena
@@ -259,6 +260,15 @@ class EtiquetaListView(ListView):
     model = Etiqueta
     template_name = "etiquetas/lista.html"
     context_object_name = "etiquetas"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        etiqueta_nombre = self.request.GET.get('etiqueta')
+        if etiqueta_nombre:
+            context['lugares'] = Lugar.objects.filter(etiquetas__nombre=etiqueta_nombre)
+        else:
+            context['lugares'] = []
+        return context
 
 
 class EtiquetaCreateView(LoginRequiredMixin, CreateView):
