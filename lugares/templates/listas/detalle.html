@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ lista.nombre }}{% endblock %}
+
+{% block content %}
+<div class="col-md-8 mx-auto">
+  <h3>{{ lista.nombre }}</h3>
+  <p class="small text-muted">Por {{ lista.usuario.username }} • {{ lista.creado_en|date:"Y-m-d" }}</p>
+
+  <ul class="list-group mb-3">
+    {% for lugar in lista.lugares.all %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span><a href="{% url 'lugares:detalle_lugar' lugar.pk %}">{{ lugar.nombre }}</a> <small class="text-muted">{{ lugar.comuna }}</small></span>
+      </li>
+    {% empty %}
+      <li class="list-group-item text-muted">La lista está vacía.</li>
+    {% endfor %}
+  </ul>
+
+  <a href="{% url 'lugares:listas' %}" class="btn btn-outline-secondary btn-sm">Volver</a>
+</div>
+{% endblock %}

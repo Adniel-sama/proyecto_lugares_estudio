@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Listas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Listas</h2>
+  {% if user.is_authenticated %}
+    <a href="{% url 'lugares:crear_lista' %}" class="btn btn-dark btn-sm">Crear lista</a>
+  {% endif %}
+</div>
+
+{% if listas %}
+  <div class="row">
+    {% for lista in listas %}
+      <div class="col-md-6 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">{{ lista.nombre }}</h5>
+            <p class="card-text small text-muted">Por {{ lista.usuario.username }} • {{ lista.creado_en|date:"Y-m-d" }}</p>
+            <a href="{% url 'lugares:detalle_lista' lista.pk %}" class="btn btn-outline-dark btn-sm">Ver</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-secondary">No hay listas aún.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{% if form.instance.pk %}Editar lugar{% else %}Agregar lugar{% endif %}{% endblock %}
+
+{% block content %}
+<div class="col-md-8 mx-auto">
+  <h3 class="mb-3">{% if form.instance.pk %}Editar lugar{% else %}Agregar lugar{% endif %}</h3>
+  <form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="mb-3">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text small">{{ field.help_text }}</div>{% endif %}
+        {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+    {% endfor %}
+    <button class="btn btn-dark" type="submit">Guardar</button>
+    <a href="{% url 'lugares:lista_lugares' %}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

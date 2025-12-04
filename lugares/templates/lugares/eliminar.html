@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Eliminar lugar{% endblock %}
+
+{% block content %}
+<div class="col-md-6 mx-auto">
+  <h3>Eliminar lugar</h3>
+  <p class="text-muted">¿Estás seguro de que quieres eliminar <strong>{{ object.nombre }}</strong>?</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+    <a href="{% url 'lugares:detalle_lugar' object.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% comment %} Muestra una lista corta de reseñas; espera variable `resenas` como iterable {% endcomment %}
+{% if resenas %}
+  <div class="list-group">
+    {% for r in resenas %}
+      <div class="list-group-item">
+        <div class="d-flex w-100 justify-content-between">
+          <strong>{{ r.usuario.username }}</strong>
+          <small class="text-muted">{{ r.creado_en|date:"Y-m-d H:i" }}</small>
+        </div>
+        <div class="small text-muted mb-1">{{ r.lugar.nombre }}</div>
+        <p class="mb-1">{{ r.comentario|truncatewords:30 }}</p>
+        <div class="small text-muted">
+          Ruido: {{ r.ruido|default:"—" }} • Concurrencia: {{ r.concurrencia|default:"—" }} • Infraestructura: {{ r.infraestructura|default:"—" }}
+          {% if r.catalogo is not None %} • Catálogo: {{ r.catalogo }}{% elif r.catalogo_no_aplica %} • Catálogo: NO APLICA{% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="text-muted small">Sin reseñas.</div>
+{% endif %}

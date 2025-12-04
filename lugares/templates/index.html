@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+
+<div class="mt-4 text-center">
+    <h2 class="mb-3">Bienvenido a Lugares de Estudio</h2>
+
+    <p class="text-muted mb-4">
+        Explora, gestiona y comparte información sobre los mejores lugares para estudiar.
+    </p>
+
+    {% comment %} <div class="d-flex justify-content-center gap-3">
+
+        <a href="{% url 'lista_lugares' %}" class="btn btn-dark">
+            Ver Lugares
+        </a>
+
+        <a href="{% url 'crear_lugar' %}" class="btn btn-outline-dark">
+            Agregar Lugar
+        </a>
+
+        <a href="{% url 'perfil_usuario' %}" class="btn btn-outline-secondary">
+            Mi Perfil
+        </a>
+
+    </div> {% endcomment %}
+</div>
+
+{% endblock %}
