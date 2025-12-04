@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Eliminar lista{% endblock %}
+
+{% block content %}
+<div class="col-md-6 mx-auto">
+  <h3 class="mb-3">Eliminar lista</h3>
+
+  <div class="alert alert-warning">
+    <p class="mb-1">¿Estás seguro de que quieres eliminar la lista <strong>{{ object.nombre }}</strong>?</p>
+    <p class="small text-muted">Esta acción no se puede deshacer.</p>
+  </div>
+
+  <form method="post" class="d-inline">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+  </form>
+
+  <a href="{% url 'detalle_lista' object.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+</div>
+{% endblock %}

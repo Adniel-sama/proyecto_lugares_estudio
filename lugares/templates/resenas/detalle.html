@@ -12,12 +12,13 @@
     {% if object.catalogo is not None %} • Catálogo: {{ object.catalogo }}{% elif object.catalogo_no_aplica %} • Catálogo: NO APLICA{% endif %}
   </p>
 
-  <div class="mt-3">
-    {% if user == object.usuario %}
-      <a href="{% url 'lugares:editar_resena' object.pk %}" class="btn btn-outline-dark btn-sm">Editar</a>
-      <a href="{% url 'lugares:eliminar_resena' object.pk %}" class="btn btn-outline-danger btn-sm">Eliminar</a>
+    <div class="mt-3">
+    {% if user.is_authenticated and user == object.usuario %}
+        <a href="{% url 'editar_resena' object.pk %}" class="btn btn-outline-dark btn-sm">Editar</a>
+        <a href="{% url 'eliminar_resena' object.pk %}" class="btn btn-outline-danger btn-sm">Eliminar</a>
     {% endif %}
-    <a href="{% url 'lugares:detalle_lugar' object.lugar.pk %}" class="btn btn-outline-secondary btn-sm">Volver al lugar</a>
-  </div>
+
+    <a href="{% url 'detalle_lugar' object.lugar.pk %}" class="btn btn-outline-secondary btn-sm">Volver al lugar</a>
+    </div>
 </div>
 {% endblock %}

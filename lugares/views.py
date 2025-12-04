@@ -1,13 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import (
-    TemplateView, ListView, CreateView, UpdateView, DeleteView, DetailView
+    ListView, CreateView, UpdateView, DeleteView, DetailView
 )
-from django.urls import reverse_lazy
-from django.urls import reverse
+from django.urls import reverse_lazy, reverse
 
 from .models import Lugar, Resena, Lista, Etiqueta
-from .forms import LugarForm, ResenaForm, ListaForm, EtiquetaForm 
+from .forms import LugarForm, ResenaForm, ListaForm, EtiquetaForm
+
+from django.contrib import messages
+
 
 
 def index(request):
@@ -33,8 +35,8 @@ class LugarCreateView(LoginRequiredMixin, CreateView):
     model = Lugar
     form_class = LugarForm
     template_name = "lugares/formulario.html"
-    # al crear, asignaremos agregado_por en form_valid
-    success_url = reverse_lazy('lugares:list')
+    # No namespace: usamos el nombre de url sin prefijo
+    success_url = reverse_lazy('lista_lugares')
 
     def form_valid(self, form):
         form.instance.agregado_por = self.request.user
@@ -45,17 +47,13 @@ class LugarUpdateView(LoginRequiredMixin, UpdateView):
     model = Lugar
     form_class = LugarForm
     template_name = "lugares/formulario.html"
-    success_url = reverse_lazy('lugares:list')
-
-    # TODO: restringir edición solo al autor (agregado_por) si lo deseas
+    success_url = reverse_lazy('lista_lugares')
 
 
 class LugarDeleteView(LoginRequiredMixin, DeleteView):
     model = Lugar
     template_name = "lugares/eliminar.html"
-    success_url = reverse_lazy('lugares:list')
-
-    # TODO: restringir borrado solo al autor o staff
+    success_url = reverse_lazy('lista_lugares')
 
 
 # Reseñas
@@ -67,16 +65,18 @@ class ResenaListView(ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        """
-        Si se pasa ?lugar=<pk> en la querystring, filtramos por ese lugar,
-        útil para mostrar reseñas de un lugar en particular.
-        """
         qs = super().get_queryset().select_related('usuario', 'lugar')
         lugar_pk = self.request.GET.get('lugar')
         if lugar_pk:
             qs = qs.filter(lugar__pk=lugar_pk)
         return qs.order_by('-creado_en')
 
+
+
+
+
+from django.contrib import messages
+from django.urls import reverse, reverse_lazy
 
 class ResenaCreateView(LoginRequiredMixin, CreateView):
     model = Resena
@@ -90,17 +90,62 @@ class ResenaCreateView(LoginRequiredMixin, CreateView):
             initial['lugar'] = lugar_pk
         return initial
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        lugar_pk = self.request.GET.get('lugar') or self.get_initial().get('lugar')
+        if lugar_pk:
+            try:
+                ctx['cancel_url'] = reverse('detalle_lugar', args=[lugar_pk])
+            except Exception:
+                ctx['cancel_url'] = reverse_lazy('lista_resenas')
+        else:
+            ctx['cancel_url'] = reverse_lazy('lista_resenas')
+        return ctx
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Solo permitir crear reseñas si viene ?lugar=PK (es decir, desde la página del lugar).
+        Si no viene, redirigimos a la lista de reseñas.
+        """
+        lugar_pk = request.GET.get('lugar') or (self.get_initial().get('lugar') if hasattr(self, 'get_initial') else None)
+        if not lugar_pk:
+            messages.warning(request, "Las reseñas solo se pueden crear desde la página de un lugar.")
+            return redirect('lista_resenas')
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
-        # asignar usuario del request
+        # asignar usuario
         form.instance.usuario = self.request.user
-        # coherencia: si marca catalogo_no_aplica dejamos catalogo=None (el modelo lo hace en save)
-        return super().form_valid(form)
+
+        # lugar puede venir como instancia (ModelChoiceField) o como pk (string)
+        lugar_val = form.cleaned_data.get('lugar') or self.request.GET.get('lugar')
+
+        # si es instancia de Lugar, usar directamente
+        if isinstance(lugar_val, Lugar):
+            form.instance.lugar = lugar_val
+        else:
+            # intentar convertir/obtener por pk
+            try:
+                lugar_obj = Lugar.objects.get(pk=int(lugar_val))
+                form.instance.lugar = lugar_obj
+            except (TypeError, ValueError, Lugar.DoesNotExist):
+                form.add_error('lugar', 'Lugar no válido.')
+                return self.form_invalid(form)
+
+        response = super().form_valid(form)
+        try:
+            form.save_m2m()
+        except Exception:
+            pass
+
+        messages.success(self.request, "Reseña guardada correctamente.")
+        return response
 
     def get_success_url(self):
-        # redirigir al detalle del lugar si existe
         if self.object and self.object.lugar:
-            return reverse('lugares:detail', args=[self.object.lugar.pk])
-        return reverse_lazy('lugares:resenas')
+            return reverse('detalle_lugar', args=[self.object.lugar.pk])
+        return reverse_lazy('lista_resenas')
+
 
 
 class ResenaDetailView(DetailView):
@@ -109,32 +154,48 @@ class ResenaDetailView(DetailView):
     context_object_name = "resena"
 
 
-class ResenaUpdateView(LoginRequiredMixin, UpdateView):
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.http import HttpResponseForbidden
+
+class ResenaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Resena
     form_class = ResenaForm
     template_name = "resenas/formulario.html"
 
+    def test_func(self):
+        # solo el autor puede editar
+        resena = self.get_object()
+        return self.request.user == resena.usuario
+
+    def handle_no_permission(self):
+        # devuelve 403 (puedes redirigir en su lugar si prefieres)
+        return HttpResponseForbidden("No tienes permiso para editar esta reseña.")
+
     def get_success_url(self):
         if self.object and self.object.lugar:
-            return reverse('lugares:detail', args=[self.object.lugar.pk])
-        return reverse_lazy('lugares:resenas')
-
-    # TODO: restringir edición solo al autor (self.request.user == self.object.usuario)
+            return reverse('detalle_lugar', args=[self.object.lugar.pk])
+        return reverse_lazy('lista_resenas')
 
 
-class ResenaDeleteView(LoginRequiredMixin, DeleteView):
+class ResenaDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Resena
     template_name = "resenas/eliminar.html"
 
+    def test_func(self):
+        resena = self.get_object()
+        return self.request.user == resena.usuario
+
+    def handle_no_permission(self):
+        return HttpResponseForbidden("No tienes permiso para eliminar esta reseña.")
+
     def get_success_url(self):
         if self.object and self.object.lugar:
-            return reverse('lugares:detail', args=[self.object.lugar.pk])
-        return reverse_lazy('lugares:resenas')
-
-    # TODO: restringir borrado solo al autor o staff
+            return reverse('detalle_lugar', args=[self.object.lugar.pk])
+        return reverse_lazy('lista_resenas')
 
 
-# Listas (listas de lugares del usuario)
+
+# Listas
 
 class ListaListView(ListView):
     model = Lista
@@ -143,11 +204,7 @@ class ListaListView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        # mostrar solo listas públicas o del usuario autenticado (si implementas privacidad más adelante)
         qs = super().get_queryset().prefetch_related('lugares', 'usuario')
-        if self.request.user.is_authenticated:
-            # opcional: mostrar primero las propias del usuario
-            return qs.order_by('-creado_en')
         return qs.order_by('-creado_en')
 
 
@@ -155,7 +212,7 @@ class ListaCreateView(LoginRequiredMixin, CreateView):
     model = Lista
     form_class = ListaForm
     template_name = "listas/formulario.html"
-    success_url = reverse_lazy('lugares:listas')
+    success_url = reverse_lazy('lista_listas')
 
     def form_valid(self, form):
         form.instance.usuario = self.request.user
@@ -168,21 +225,32 @@ class ListaDetailView(DetailView):
     context_object_name = "lista"
 
 
-class ListaUpdateView(LoginRequiredMixin, UpdateView):
+class ListaUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Lista
     form_class = ListaForm
     template_name = "listas/formulario.html"
-    success_url = reverse_lazy('lugares:listas')
+    success_url = reverse_lazy('lista_listas')
 
-    # TODO: restringir edición solo al dueño (usuario)
+    def test_func(self):
+        lista = self.get_object()
+        return self.request.user == lista.usuario
+
+    def handle_no_permission(self):
+        return HttpResponseForbidden("No tienes permiso para editar esta lista.")
 
 
-class ListaDeleteView(LoginRequiredMixin, DeleteView):
+class ListaDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Lista
     template_name = "listas/eliminar.html"
-    success_url = reverse_lazy('lugares:listas')
+    success_url = reverse_lazy('lista_listas')
 
-    # TODO: restringir borrado solo al dueño (usuario)
+    def test_func(self):
+        lista = self.get_object()
+        return self.request.user == lista.usuario
+
+    def handle_no_permission(self):
+        return HttpResponseForbidden("No tienes permiso para eliminar esta lista.")
+
 
 
 # Etiquetas
@@ -197,11 +265,11 @@ class EtiquetaCreateView(LoginRequiredMixin, CreateView):
     model = Etiqueta
     form_class = EtiquetaForm
     template_name = "etiquetas/formulario.html"
-    success_url = reverse_lazy('lugares:etiquetas')
+    success_url = reverse_lazy('lista_etiquetas')
 
 
 class EtiquetaUpdateView(LoginRequiredMixin, UpdateView):
     model = Etiqueta
     form_class = EtiquetaForm
     template_name = "etiquetas/formulario.html"
-    success_url = reverse_lazy('lugares:etiquetas')
+    success_url = reverse_lazy('lista_etiquetas')

@@ -9,13 +9,21 @@
   <ul class="list-group mb-3">
     {% for lugar in lista.lugares.all %}
       <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span><a href="{% url 'lugares:detalle_lugar' lugar.pk %}">{{ lugar.nombre }}</a> <small class="text-muted">{{ lugar.comuna }}</small></span>
+        <span><a href="{% url 'detalle_lugar' lugar.pk %}">{{ lugar.nombre }}</a> <small class="text-muted">{{ lugar.comuna }}</small></span>
       </li>
     {% empty %}
       <li class="list-group-item text-muted">La lista está vacía.</li>
     {% endfor %}
   </ul>
 
-  <a href="{% url 'lugares:listas' %}" class="btn btn-outline-secondary btn-sm">Volver</a>
+  <div class="mb-3">
+  {% if user.is_authenticated and user == lista.usuario %}
+    <a href="{% url 'editar_lista' lista.pk %}" class="btn btn-outline-dark btn-sm">Editar</a>
+    <a href="{% url 'eliminar_lista' lista.pk %}" class="btn btn-outline-danger btn-sm">Eliminar</a>
+  {% endif %}
+  <a href="{% url 'lista_listas' %}" class="btn btn-outline-secondary btn-sm">Volver</a>
+</div>
+
 </div>
 {% endblock %}
+
