@@ -11,6 +11,8 @@ from .forms import LugarForm, ResenaForm, ListaForm, EtiquetaForm
 from django.contrib import messages
 
 from django.http import HttpResponseForbidden
+from django.db import connection
+from django.shortcuts import render
 
 
 
@@ -283,3 +285,52 @@ class EtiquetaUpdateView(LoginRequiredMixin, UpdateView):
     form_class = EtiquetaForm
     template_name = "etiquetas/formulario.html"
     success_url = reverse_lazy('lista_etiquetas')
+
+#SQL
+
+def calificaciones_sql_view(request):
+    query = """
+        SELECT 
+            l.id,
+            l.nombre,
+            AVG(r.ruido) AS promedio_ruido,
+            AVG(r.concurrencia) AS promedio_concurrencia,
+            AVG(r.infraestructura) AS promedio_infraestructura,
+            AVG(r.catalogo) AS promedio_catalogo,
+            (
+                (
+                    COALESCE(AVG(r.ruido),0) +
+                    COALESCE(AVG(r.concurrencia),0) +
+                    COALESCE(AVG(r.infraestructura),0) +
+                    COALESCE(AVG(r.catalogo),0)
+                ) / 
+                NULLIF(
+                    (CASE WHEN AVG(r.ruido) IS NOT NULL THEN 1 ELSE 0 END) +
+                    (CASE WHEN AVG(r.concurrencia) IS NOT NULL THEN 1 ELSE 0 END) +
+                    (CASE WHEN AVG(r.infraestructura) IS NOT NULL THEN 1 ELSE 0 END) +
+                    (CASE WHEN AVG(r.catalogo) IS NOT NULL THEN 1 ELSE 0 END),
+                    0
+                )
+            ) AS promedio_general
+        FROM lugares_lugar l
+        LEFT JOIN lugares_resena r ON l.id = r.lugar_id
+        GROUP BY l.id, l.nombre
+        ORDER BY l.nombre;
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        resultados = cursor.fetchall()
+    
+    lugares = []
+    for fila in resultados:
+        lugares.append({
+            'id': fila[0],
+            'nombre': fila[1],
+            'promedio_ruido': fila[2],
+            'promedio_concurrencia': fila[3],
+            'promedio_infraestructura': fila[4],
+            'promedio_catalogo': fila[5],
+            'promedio_general': fila[6],
+        })
+    
+    return render(request, 'lugares/calificaciones.html', {'lugares': lugares})

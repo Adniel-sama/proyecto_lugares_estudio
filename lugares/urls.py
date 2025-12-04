@@ -17,6 +17,7 @@ urlpatterns = [
     path('resenas/<int:pk>/', ResenaDetailView.as_view(), name='detalle_resena'),
     path('resenas/<int:pk>/editar/', ResenaUpdateView.as_view(), name='editar_resena'),
     path('resenas/<int:pk>/eliminar/', ResenaDeleteView.as_view(), name='eliminar_resena'),
+    
 
     # Listas
     path('listas/', ListaListView.as_view(), name='lista_listas'),
@@ -29,4 +30,8 @@ urlpatterns = [
     path('etiquetas/', EtiquetaListView.as_view(), name='lista_etiquetas'),
     path('etiquetas/crear/', EtiquetaCreateView.as_view(), name='crear_etiqueta'),
     path('etiquetas/<int:pk>/editar/', EtiquetaUpdateView.as_view(), name='editar_etiqueta'),
+    
+    #calificaciones 
+    path('calificaciones-sql/', calificaciones_sql_view, name='calificaciones_sql'),
+
 ]

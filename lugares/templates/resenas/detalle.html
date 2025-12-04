@@ -12,13 +12,20 @@
     {% if object.catalogo is not None %} • Catálogo: {{ object.catalogo }}{% elif object.catalogo_no_aplica %} • Catálogo: NO APLICA{% endif %}
   </p>
 
-    <div class="mt-3">
-    {% if user.is_authenticated and user == object.usuario %}
-        <a href="{% url 'editar_resena' object.pk %}" class="btn btn-outline-dark btn-sm">Editar</a>
-        <a href="{% url 'eliminar_resena' object.pk %}" class="btn btn-outline-danger btn-sm">Eliminar</a>
+    {% for resena in lugar.resenas.all %}
+    <p>{{ resena.usuario }}: {{ resena.comentario }}</p>
+    {% if user == resena.agregado_por %}
+        <a href="{% url 'editar_resena' resena.pk %}" class="btn btn-outline-dark btn-sm">Editar</a>
+        <a href="{% url 'eliminar_resena' resena.pk %}" class="btn btn-outline-danger btn-sm">Eliminar</a>
     {% endif %}
+    {% endfor %}
+
+    
+
 
     <a href="{% url 'detalle_lugar' object.lugar.pk %}" class="btn btn-outline-secondary btn-sm">Volver al lugar</a>
     </div>
 </div>
 {% endblock %}
+
+x

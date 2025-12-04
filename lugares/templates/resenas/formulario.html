@@ -17,9 +17,7 @@
       </div>
     {% endif %}
 
-    {# Aseguramos que el campo lugar exista como hidden:
-       - si el form tiene el campo, lo renderizamos (puede ser HiddenInput)
-       - si no, inyectamos el valor desde request.GET.lugar #}
+
     {% if form.lugar %}
       {{ form.lugar }}
     {% else %}
@@ -41,7 +39,7 @@
 
     <button class="btn btn-dark" type="submit">Guardar</button>
 
-    {# Cancelar: usar cancel_url si la vista lo proporcionó, fallback a lista de reseñas #}
+ 
     {% if cancel_url %}
       <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Cancelar</a>
     {% elif request.GET.lugar %}

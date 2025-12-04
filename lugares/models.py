@@ -77,15 +77,12 @@ class Resena(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         help_text="Escala 1-5 o vacío si no aplica"
     )
-
-    # Catálogo bibliográfico: valor 1..5, o null si NO aplica.
     catalogo = models.SmallIntegerField(
         null=True,
         blank=True,
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text="Calificación catálogo 1-5; use catalogo_no_aplica para indicar que no aplica"
+        help_text="Calificación catálogo 1-5 o vacío si no aplica"
     )
-    catalogo_no_aplica = models.BooleanField(default=False, help_text="Marcar si el catálogo no aplica")
 
     creado_en = models.DateTimeField(auto_now_add=True, db_index=True)
 
@@ -99,23 +96,9 @@ class Resena(models.Model):
             models.Index(fields=["creado_en"]),
         ]
 
-
     def __str__(self):
-        texto = f"Reseña de {self.usuario} sobre {self.lugar}"
-        return texto
+        return f"Reseña de {self.usuario} sobre {self.lugar}"
 
-    def clean(self):
-        if self.catalogo_no_aplica and self.catalogo is not None:
-            raise ValidationError("Si 'catalogo_no_aplica' es True, 'catalogo' debe ser vacío (NULL).")
-        # Si catalogo tiene valor y está fuera de rango, los validators ya lanzarán.
-        # No permitimos catalogo == 0 por diseño (usar NULL)
-        super().clean()
-
-    def save(self, *args, **kwargs):
-        # Forzar coherencia: si catalogo_no_aplica True, dejar catalogo en None.
-        if self.catalogo_no_aplica:
-            self.catalogo = None
-        super().save(*args, **kwargs)
 
 
 class Lista(models.Model):

@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from .models import Lugar, Resena, Lista, Etiqueta
 
 
+
 class TimeInput(forms.TimeInput):
     input_type = "time"
 
@@ -49,80 +50,28 @@ class LugarForm(forms.ModelForm):
 RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
 
 
+
+
+VALORES_CALIFICACION = [
+    ("", "No aplica"),  # Se guardará como NULL en la base
+    (1, "1. Muy mala"),
+    (2, "2. Mala"),
+    (3, "3. Regular"),
+    (4, "4. Buena"),
+    (5, "5. Muy buena"),
+]
+
 class ResenaForm(forms.ModelForm):
-    ruido = forms.ChoiceField(
-        choices=[("", "—")] + RATING_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Ruido (1-5)",
-    )
-    concurrencia = forms.ChoiceField(
-        choices=[("", "—")] + RATING_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Concurrencia (1-5)",
-    )
-    infraestructura = forms.ChoiceField(
-        choices=[("", "—")] + RATING_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Infraestructura (1-5)",
-    )
-
-    catalogo = forms.ChoiceField(
-        choices=[("", "—")] + RATING_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={"class": "form-select"}),
-        label="Catálogo (1-5)",
-    )
-    catalogo_no_aplica = forms.BooleanField(
-        required=False,
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"}),
-        label="Catálogo no aplica",
-    )
-
     class Meta:
         model = Resena
-        fields = ["lugar", "comentario", "ruido", "concurrencia", "infraestructura", "catalogo", "catalogo_no_aplica"]
+        fields = ["comentario", "ruido", "concurrencia", "infraestructura", "catalogo"]
         widgets = {
-            "lugar": forms.HiddenInput(),  # normalmente pasamos lugar por querystring o hidden field
-            "comentario": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "comentario": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "ruido": forms.Select(choices=VALORES_CALIFICACION, attrs={"class": "form-select"}),
+            "concurrencia": forms.Select(choices=VALORES_CALIFICACION, attrs={"class": "form-select"}),
+            "infraestructura": forms.Select(choices=VALORES_CALIFICACION, attrs={"class": "form-select"}),
+            "catalogo": forms.Select(choices=VALORES_CALIFICACION, attrs={"class": "form-select"}),
         }
-
-    def clean(self):
-        cleaned = super().clean()
-
-        no_aplica = cleaned.get("catalogo_no_aplica")
-        catalogo = cleaned.get("catalogo")
-
-        # Normalize empty strings to None (because we use ChoiceField)
-        if catalogo == "":
-            catalogo = None
-            cleaned["catalogo"] = None
-
-        if no_aplica and catalogo is not None:
-            raise ValidationError(_("Si marca 'Catálogo no aplica', el campo 'Catálogo' debe estar vacío."))
-        return cleaned
-
-    def save(self, commit=True):
-        # Convert choice strings to int or None before saving to model
-        instance = super().save(commit=False)
-        cat = self.cleaned_data.get("catalogo")
-        if cat in (None, ""):
-            instance.catalogo = None
-        else:
-            instance.catalogo = int(cat)
-        instance.catalogo_no_aplica = bool(self.cleaned_data.get("catalogo_no_aplica", False))
-
-        # For other rating fields (they come as strings), convert to int or None
-        for field in ("ruido", "concurrencia", "infraestructura"):
-            val = self.cleaned_data.get(field)
-            setattr(instance, field, int(val) if val not in (None, "") else None)
-
-        if commit:
-            instance.save()
-            # If there are M2M (none here), call save_m2m in the CreateView's form_valid via form.save_m2m()
-        return instance
 
 
 class ListaForm(forms.ModelForm):
