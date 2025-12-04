@@ -4,12 +4,9 @@ from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, DetailView
 )
 from django.urls import reverse_lazy, reverse
-
 from .models import Lugar, Resena, Lista, Etiqueta
 from .forms import LugarForm, ResenaForm, ListaForm, EtiquetaForm
-
 from django.contrib import messages
-
 from django.http import HttpResponseForbidden
 from django.db import connection
 from django.shortcuts import render

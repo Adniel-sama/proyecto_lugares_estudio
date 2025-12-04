@@ -30,7 +30,7 @@ class Lugar(models.Model):
     tipo = models.CharField(max_length=32, choices=TIPO_LUGAR_CHOICES, db_index=True)
     direccion = models.CharField(max_length=255, blank=True)
     comuna = models.CharField(max_length=120, db_index=True)
-    descripcion = models.TextField(blank=True)  # <--- nueva
+    descripcion = models.TextField(blank=True, null=True)  # <--- nueva
     imagen_url = models.URLField(blank=True, null=True)  # <--- nueva
     horario_apertura = models.TimeField(null=True, blank=True)
     horario_cierre = models.TimeField(null=True, blank=True)
