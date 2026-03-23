@@ -1,0 +1,1 @@
+web: gunicorn proyecto_lugares_estudio.wsgi

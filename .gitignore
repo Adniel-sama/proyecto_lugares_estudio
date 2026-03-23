@@ -16,3 +16,10 @@
 *.egg
 dist/
 build/
+
+# Ignorar archivos locales
+.env
+__pycache__/
+db.sqlite3
+staticfiles/
+venv/
